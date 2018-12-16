@@ -16,8 +16,8 @@ Nice for studying political history.
 
 ## Architecture
 
-![Architecture](./docs/images/arch.png "Architecture")
+![Architecture](./docs/images/arch.svg "Architecture")
 
 ## Example Output
 
-![Example Output](./docs/images/example.png "Example Output")
+![Example Output](./docs/images/example.svg "Example Output")
