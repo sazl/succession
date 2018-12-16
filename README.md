@@ -12,3 +12,12 @@ Nice for studying political history.
 - Include significant contenders, usurpers, and challengers.
 - Tag particular nodes (leaders) with attributes that can be searched and filtered
 - Support complex range filters and selection filters e.g. All emperors assassinated within 5 years of their rule.
+
+
+## Architecture
+
+![Architecture](./docs/images/arch.png "Architecture")
+
+## Example Output
+
+![Example Output](./docs/images/example.png "Example Output")
