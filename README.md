@@ -13,11 +13,13 @@ Nice for studying political history.
 - Tag particular nodes (leaders) with attributes that can be searched and filtered
 - Support complex range filters and selection filters e.g. All emperors assassinated within 5 years of their rule.
 
+## Example Output
+
+![Example Output](./docs/images/example.png "Example Output")
+
+## Queries
+
 
 ## Architecture
 
 ![Architecture](./docs/images/arch.png "Architecture")
-
-## Example Output
-
-![Example Output](./docs/images/example.png "Example Output")
