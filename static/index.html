@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+        <link rel="stylesheet" href="https://unpkg.com/tachyons@4.10.0/css/tachyons.min.css"/>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+    <body>
+        <nav class="pa1 pa2-ns">
+            <div class="link black b f6 f5-ns dib mr3" href="#" title="Home">
+                <label for="category"></label>
+                <input type="text" id="category">
+                <button id="add-category">Add</button>
+            </div>
+        </nav>
+
+        <div class="content flex">
+            <div id="cy" class="left w-50">
+            </div>
+            <div id="d3" class="right w-50">
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.2.22/cytoscape.min.js" integrity="sha256-Bqs25OhKdh8ooPMp5xt7cUlfLylUhYzSG6OIAD0DJzM=" crossorigin="anonymous"></script>
+		<script src="https://unpkg.com/bluebird@3.5.1/js/browser/bluebird.js"></script>
+        <script src="https://unpkg.com/whatwg-fetch@2.0.3/fetch.js"></script>
+
+        <script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
+        <script src="/static/cytoscape-cola.js"></script>
+
+        <script src="https://unpkg.com/klayjs@0.4.1/klay.js"></script>
+        <script src="/static/cytoscape-klay.js"></script>
+
+        <script src="//d3js.org/d3.v5.min.js"></script>
+        <script src="https://d3js.org/d3-path.v1.min.js"></script>
+        <script src="https://d3js.org/d3-shape.v1.min.js"></script>
+        <script src="https://d3js.org/d3-hierarchy.v1.min.js"></script>
+
+        <script src="/static/main.js"></script>
+        <script src="/static/collapsible.js"></script>
+        <script src="/static/draw.js"></script>
+    </body>
+</html>

@@ -20,6 +20,37 @@ Nice for studying political history.
 ## Queries
 
 
+## Wiki Notes
+
+### Infobox
+
+https://en.wikipedia.org/wiki/Template:Infobox_royalty
+
+### Other Infoboxes
+
+https://en.wikipedia.org/wiki/Template:Infobox_peerage_title
+https://en.wikipedia.org/wiki/Template:Infobox_baronetage
+https://en.wikipedia.org/wiki/Template:Infobox_Egyptian_dignitary
+https://en.wikipedia.org/wiki/Template:Infobox_noble
+https://en.wikipedia.org/wiki/Template:Infobox_peer
+https://en.wikipedia.org/wiki/Template:Infobox_pharaoh
+https://en.wikipedia.org/wiki/Template:Infobox_pretender
+
+### Micro formats
+
+"The HTML markup produced by this template includes an hCard microformat, which makes the person's details parsable by computers"
+
+https://en.wikipedia.org/wiki/HCard
+
+https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Microformats
+
+Unfortunately the hCards are not complete.
+Take Trajan for example:
+
+```
+
+```
+
 ## Architecture
 
 ![Architecture](./docs/images/arch.png "Architecture")

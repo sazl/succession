@@ -1,0 +1,59 @@
+body {
+    font-family: helvetica;
+    font-size: 12px;
+    overflow: hidden;
+}
+
+nav {
+    border-bottom: 1px solid #ccc;
+}
+
+#cy {
+    z-index: 900;
+}
+
+h1 {
+    opacity: 0.5;
+    font-size: 1em;
+}
+
+.content {
+    height: 100vh;
+}
+
+.left, .right {
+    border: 1px solid #ccf;
+    height: 100vh;
+}
+
+.node circle {
+    fill: #fff;
+    stroke: #888;
+    stroke-width: 2px;
+}
+
+.node text {
+    font: 12px sans-serif;
+}
+
+.link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 2px;
+}
+
+.svg-container {
+    position: relative;
+    height: 0;
+    width: 100%;
+    padding: 0;
+    /* padding-bottom will be overwritten by JavaScript later */
+    padding-bottom: 100%;
+}
+.svg-container > svg {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+}

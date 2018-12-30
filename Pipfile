@@ -8,5 +8,7 @@ python_version = "3.7.0"
 
 [packages]
 requests = '*'
+wikipedia = '*'
+flask = "*"
 
 [dev-packages]

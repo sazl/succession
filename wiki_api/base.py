@@ -8,7 +8,7 @@ def get(params):
     data = resp.json()
     return data
 
-def query(request, delay=0.5):
+def query(request, delay=1):
     request['action'] = 'query'
     request['format'] = 'json'
     lastContinue = {}

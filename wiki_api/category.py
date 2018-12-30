@@ -1,17 +1,61 @@
 from typing import List
-from dataclasses import dataclass, field
+import dataclasses
 
+import json
 import copy
 
 from wiki_api import base
 
-@dataclass
+def get_pages(category, limit=50):
+    params = {
+        'action': "query",
+        'list': "categorymembers",
+        'cmtitle': category.cmtitle,
+        'cmlimit': limit,
+        'format': "json"
+    }
+
+    return list(base.query(params))[0]['categorymembers']
+
+def get_subcategories(category, limit=50):
+    params = {
+        'action': "query",
+        'list': "categorymembers",
+        'cmtitle': category.cmtitle,
+        'cmlimit': limit,
+        'cmtype': "subcat",
+        'format': "json"
+    }
+
+    return list(base.query(params))[0]['categorymembers']
+
+def get_category(category, limit=50):
+    params = {
+        'action': "query",
+        'list': "categorymembers",
+        'cmtitle': category.cmtitle,
+        'cmlimit': limit,
+        'format': "json"
+    }
+
+    return list(base.query(params))
+
+
+@dataclasses.dataclass
+class Page:
+    title: str = None
+    pageid: int = None
+
+
+@dataclasses.dataclass
 class Category:
     name: str = None
-    namespace: int = 0
-    pageid: int = 0
+    namespace: int = None
+    pageid: int = None
     title: str = None
-    members: List['Category'] = field(default_factory=list)
+
+    members: List['Category'] = dataclasses.field(default_factory=list)
+    pages: List[Page] = dataclasses.field(default_factory=list)
 
     @property
     def cmtitle(self):
@@ -24,36 +68,9 @@ class Category:
         return cls(title=data['title'], namespace=data['ns'], pageid=data['pageid'])
 
 
+class CategoryJSONEncoder(json.JSONEncoder):
 
-def get_subcategories(category, limit=10):
-    params = {
-        'action': "query",
-        'list': "categorymembers",
-        'cmtitle': category.cmtitle,
-        'cmlimit': limit,
-        'cmtype': "subcat",
-        'format': "json"
-    }
-
-    category_members = base.query(params)
-    result = copy.deepcopy(category)
-
-    for category_member in category_members:
-        data = category_member['categorymembers']
-        for category in data:
-            cat = Category.from_dict(category)
-            result.members.append(cat)
-
-    return result
-
-
-def get_category(category, limit=10):
-    params = {
-        'action': "query",
-        'list': "categorymembers",
-        'cmtitle': category.cmtitle,
-        'cmlimit': limit,
-        'format': "json"
-    }
-
-    return base.query(params)
+    def default(self, o):
+        if dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+        return super().default(o)
