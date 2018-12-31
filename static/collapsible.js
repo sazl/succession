@@ -25,7 +25,6 @@ function tree() {
 		}
 
 		if (!d.children && !d._children) {
-			console.log('HERE', d);
 			const name = d.data.name;
 			return getSubcategoriesPromise(name)
 				.then((data) => {
@@ -40,7 +39,22 @@ function tree() {
 						return n;
 					});
 					d.children = hierarch.length > 0 ? hierarch : null;
-					d.data.children = hierarch.map(d => d.data);
+					d.data.children = hierarch.length > 0 ? hierarch.map(d => d.data) : null;
+					return Promise.all([d, getPages(name)]);
+				})
+				.then(([d, pages]) => {
+					const hierarch = pages.map(c => {
+						const parent = d;
+						const name = c.title.replace(/^Category:/, '');
+						const children = null;
+						const obj = { name, type: 'page', children };
+						const n = d3.hierarchy(obj, x => x.children);
+						n.parent = parent;
+						n.depth = parent.depth + 1;
+						return n;
+					});
+					d.children = hierarch.length > 0 ? d.children.concat(hierarch) : d.children;
+					d.data.children = hierarch.length > 0 ? d.data.children.concat(hierarch.map(d => d.data)) : d.data.children;
 					return d;
 				});
 		}
@@ -90,7 +104,28 @@ function tree() {
 
 			// toggle children on click
 			function click(d) {
-				updateRemote(d);
+				const node = d3.select(this).select('circle');
+
+				function blink() {
+					node.transition()
+							.ease(d3.easeLinear)
+							.duration(400)
+							.style('fill', 'ffa')
+						.transition()
+							.ease(d3.easeLinear)
+							.duration(400)
+							.style('fill', '#888')
+						.on('end', blink);
+				}
+
+				blink();
+				updateRemote(d).finally(() => {
+					console.log(node);
+					node.transition()
+						.ease(d3.easeLinear)
+						.duration(200)
+						.style('fill', '#afc');
+				});
 			}
 
 			function updateRemote(d) {
@@ -137,11 +172,12 @@ function tree() {
 
 		        // add circle for the nodes
 		        nodeEnter.append('circle')
-			        .attr('class', 'node')
+					.attr('class', 'node')
 			        .attr('r', 1e-6);
 
 		        // add labels for the nodes
-		        nodeEnter.append('text')
+				nodeEnter.append('text')
+					.attr('class', 'label')
 			        .attr('dy', '.35em')
 			        .attr('x', d =>
 			        	d.children || d._children ? 0 : 13
@@ -156,20 +192,23 @@ function tree() {
 
 		        // add number of children to node circle
 		        nodeEnter.append('text')
-			        .attr('x', -3)
-			        .attr('y', 3)
-			        .style('font-size', '10px')
-			        .text((d) => {
-			        	if (d.children) {
-							return d.children.length;
-						}
-			        	else if (d._children) {
-							return d._children.length;
-						}
-			        });
+					.attr('class', 'node__label')
+					.attr('x', -5)
+			        .attr('y', 4)
+			        .style('font-size', '10px');
 
 		        // UPDATE
-		        var nodeUpdate = nodeEnter.merge(node);
+				var nodeUpdate = nodeEnter.merge(node);
+
+				nodeUpdate.select('text.node__label')
+					.text((d) => {
+						if (d.children) {
+							return d.children.length;
+						}
+						else if (d._children) {
+							return d._children.length;
+						}
+					});
 
 		        // transition to the proper position for the node
 		        nodeUpdate.transition().duration(duration)
@@ -182,7 +221,11 @@ function tree() {
 		        // update the node attributes and style
 		        nodeUpdate.select('circle.node')
 			        .attr('r', 9)
-					.attr('class', d => d._children ? 'node--internal' : 'node--leaf')
+					.attr('class', (d) => {
+						if (d.children) { return 'node--internal'; };
+						if (d.data.type === 'page') { return 'node--page'; };
+						return 'node--leaf';
+					})
 			        .attr('cursor', 'pointer');
 
 		        // remove any exiting nodes

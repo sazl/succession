@@ -35,6 +35,14 @@ h1 {
     fill: #e4e4e4
 }
 
+.node .node--empty {
+    fill: #fcc;
+}
+
+.node .node--page {
+    fill: #fcc;
+}
+
 .node:hover .node--leaf {
     fill: #aa9;
 }
