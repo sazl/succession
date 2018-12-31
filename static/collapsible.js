@@ -1,16 +1,53 @@
 function tree() {
-	const totalWidth = 960;
+	let selected;
+	const totalWidth = 800;
 	const totalHeight = 800;
 	const horizontalSpacing = 270;
 	var data,
 		i = 0,
         duration = 750,
-        margin = {top: 40, right: 0, bottom: 40, left: 80},
+        margin = {top: 20, right: 0, bottom: 20, left: 80},
 	    width = totalWidth - margin.left - margin.right,
         height = totalHeight - margin.top - margin.bottom,
         update;
 
-	const diagonal = d3.linkHorizontal().x(d => d.y).y(d => d.x);
+	// const diagonal = d3.linkHorizontal().x(d => d.y).y(d => d.x);
+
+	function updateChildren(d) {
+		if (d.children) {
+			d._children = d.children;
+			d.children = null;
+			return Promise.resolve(d);
+		} else if (d._children) {
+			d.children = d._children;
+			d._children = null;
+			return Promise.resolve(d);
+		}
+
+		if (!d.children && !d._children) {
+			console.log('HERE', d);
+			const name = d.data.name;
+			return getSubcategoriesPromise(name)
+				.then((data) => {
+					const hierarch = data.map(c => {
+						const parent = d;
+						const name = c.title.replace(/^Category:/, '');
+						const children = null;
+						const obj = { name, children };
+						const n = d3.hierarchy(obj, x => x.children);
+						n.parent = parent;
+						n.depth = parent.depth + 1;
+						return n;
+					});
+					d.children = hierarch.length > 0 ? hierarch : null;
+					d.data.children = hierarch.map(d => d.data);
+					return d;
+				});
+		}
+
+		return Promise.resolve(d);
+	}
+
 
     function chart(selection){
         selection.each(function () {
@@ -24,20 +61,17 @@ function tree() {
             // append the svg object to the selection
 			const svg = d3.select(this)
 				.append('svg')
-				.call(zoomListener)
-                .attr('width', width + margin.left + margin.right)
-                .attr('height', height + margin.top + margin.bottom)
-				.append('g')
-				.attr('transform', `translate(${margin.left}, ${margin.top})`);
+                .attr('width', '100%') //width + margin.left + margin.right)
+				.attr('height', '100%') //height + margin.top + margin.bottom)
+		    	.attr('preserveAspectRatio', 'xMinYMin meet')
+				.style("user-select", "none")
+				.call(zoomListener);
+
+			const g = svg.append('g');
+			g.attr('transform', `translate(${margin.left}, ${margin.top})`);
 
 			function zoomed() {
-				svg.attr("transform", d3.event.transform);
-			}
-
-			function dragged(d) {
-				d3.select(this)
-					.attr("cx", d.x = d3.event.x)
-					.attr("cy", d.y = d3.event.y);
+				g.attr("transform", d3.event.transform);
 			}
 
             // declares a tree layout and assigns the size of the tree
@@ -48,45 +82,28 @@ function tree() {
 			root.x0 = height / 2; // left edge of the rectangle
 			root.y0 = 0; // top edge of the triangle
 
-			function updateChildren(d) {
-				if (d.children) {
-					d._children = d.children;
-					d.children = null;
-					return Promise.resolve(d);
-				} else if (d._children) {
-					d.children = d._children;
-					d._children = null;
-					return Promise.resolve(d);
-				}
-
-				if (!d.children && !d._children) {
-					console.log('HERE', d);
-					const name = d.data.name.replace(/^Category:/, '');
-					return getSubcategoriesPromise(name)
-						.then((data) => {
-							const hierarch = data.map(c => {
-								const parent = d;
-								const obj = { name: c.title, children: null };
-								const n = d3.hierarchy(obj, x => x.children);
-								n.parent = parent;
-								n.depth = parent.depth + 1;
-								return n;
-							});
-							d.children = hierarch.length > 0 ? hierarch : null;
-							d.data.children = hierarch.map(d => d.data);
-							return d;
-						});
-				}
-
-				return Promise.resolve(d);
+			function transform() {
+				console.log('transform', this);
+				return d3.zoomIdentity
+					.translate(selected.x0 - horizontalSpacing, selected.y0);
 			}
 
 			// toggle children on click
 			function click(d) {
-				updateChildren(d)
+				updateRemote(d);
+			}
+
+			function updateRemote(d) {
+				return updateChildren(d)
 					.then((d) => {
-						console.log(d);
+						selected = d;
 						update(d);
+						/*
+						svg.transition()
+							.delay(100)
+							.duration(1000)
+							.call(zoomListener.transform, transform)
+						*/
 					});
 			}
 
@@ -110,7 +127,7 @@ function tree() {
 
 		        // Enter any new modes at the parent's previous position.
 		        var nodeEnter = node.enter().append('g')
-			        .attr('class', 'node')
+					.attr('class', 'node')
 			        .attr('transform', function(d) {
 						const x = source.y0 + margin.top;
 						const y = source.x0 + margin.left;
@@ -121,8 +138,7 @@ function tree() {
 		        // add circle for the nodes
 		        nodeEnter.append('circle')
 			        .attr('class', 'node')
-			        .attr('r', 1e-6)
-			        .style('fill', d => d._children ? 'node--internal' : 'node--leaf');
+			        .attr('r', 1e-6);
 
 		        // add labels for the nodes
 		        nodeEnter.append('text')
@@ -142,7 +158,6 @@ function tree() {
 		        nodeEnter.append('text')
 			        .attr('x', -3)
 			        .attr('y', 3)
-			        .attr('cursor', 'pointer')
 			        .style('font-size', '10px')
 			        .text((d) => {
 			        	if (d.children) {
@@ -167,7 +182,7 @@ function tree() {
 		        // update the node attributes and style
 		        nodeUpdate.select('circle.node')
 			        .attr('r', 9)
-					.style('fill', d => d._children ? 'node--internal' : 'node--leaf')
+					.attr('class', d => d._children ? 'node--internal' : 'node--leaf')
 			        .attr('cursor', 'pointer');
 
 		        // remove any exiting nodes
@@ -198,7 +213,7 @@ function tree() {
 		        var linkEnter = link.enter().insert('path', 'g')
 			        .attr('class', 'link')
 			        .attr('d', function(d) {
-			        	var o = {x: source.x0 + margin.left, y: source.y0 + margin.top};
+			        	var o = {x: source.x0 /* + margin.left */, y: source.y0 /* + margin.top */};
 			        	return diagonal({ source: o, target: o });
 			        });
 
@@ -221,8 +236,8 @@ function tree() {
 
 		        // store the old positions for transition
 		        nodes.forEach(function(d) {
-		        	d.x0 = d.x + margin.left;
-		        	d.y0 = d.y + margin.top;
+		        	d.x0 = d.x; // + margin.left;
+		        	d.y0 = d.y; // + margin.top;
 				});
 
 
@@ -275,26 +290,23 @@ window.addEventListener('load', () => {
     const categoryInput = document.getElementById('category');
     const defaultCategory = 'Roman emperors';
     categoryInput.value = defaultCategory;
-    cyGraph(defaultCategory);
 
-	return getSubcategoriesPromise(defaultCategory)
-		.then((data) => {
-			const category = defaultCategory;
-			const children = data.map(d => ({ name: d.title }));
-			const root = { name: category, children };
-			const chart = tree().data(root);
-			d3.select('#d3').call(chart);
-		});
+	// cyGraph(defaultCategory);
+
+	const category = defaultCategory;
+	const children = null
+	const root = { name: category, children };
+	const chart = tree().data(root);
+	d3.select('#d3').call(chart);
 });
 
-/*
 const addButton = document.getElementById('add-category');
 addButton.addEventListener('click', (event) => {
   const category = document.getElementById('category').value;
-  cyGraph(category);
   const svg = d3.select("svg");
-  svg.selectAll("*").remove();
-  init();
-  d3Graph(category);
+  svg.selectAll('*').remove();
+  const children = null
+  const root = { name: category, children };
+  const chart = tree().data(root);
+  svg.call(chart);
 });
-*/

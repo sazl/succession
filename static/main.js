@@ -95,6 +95,7 @@ function cyGraph(category) {
         });
 }
 
+/*
 document.addEventListener('DOMContentLoaded', function(){
     cy = cytoscape({
         container: document.getElementById('cy'),
@@ -153,3 +154,4 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 
 });
+*/
