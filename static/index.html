@@ -6,11 +6,23 @@
         <link rel="stylesheet" href="/static/style.css">
     </head>
     <body>
-        <nav class="pa1 pa2-ns">
-            <div class="link black b f6 f5-ns dib mr3" href="#" title="Home">
+        <nav class="db dt-l w-100 border-box pa1 f6 f5-ns ">
+            <div class="db dtc-l v-mid mid-gray w-100 w-25-l">
                 <label for="category"></label>
                 <input type="text" id="category">
                 <button id="add-category">Load</button>
+            </div>
+
+            <div class="db dtc-l v-mid w-100 w-75-l tc tr-l">
+                <div class="mr3 mr4-l fr">
+                    <input type="checkbox" name="pages" id="page-toggle">
+                    <label for="pages">Pages</label>
+                </div>
+
+                <div class="mr3 mr4-l fr">
+                    <input type="checkbox" name="categories" id="category-toggle">
+                    <label for="categories">Categories</label>
+                </div>
             </div>
         </nav>
 

@@ -1,8 +1,13 @@
+let showPages = true;
+let showCategories = true;
+
 function tree() {
 	let selected;
 	const totalWidth = 800;
 	const totalHeight = 800;
 	const horizontalSpacing = 270;
+	const circleRadius = 9;
+	const circleGrowRadius = 14;
 	var data,
 		i = 0,
         duration = 750,
@@ -26,7 +31,8 @@ function tree() {
 
 		if (!d.children && !d._children) {
 			const name = d.data.name;
-			return getSubcategoriesPromise(name)
+			const subcategoriesPromise = showCategories ? getSubcategoriesPromise(name) : Promise.resolve([]);
+			return subcategoriesPromise
 				.then((data) => {
 					const hierarch = data.map(c => {
 						const parent = d;
@@ -40,7 +46,9 @@ function tree() {
 					});
 					d.children = hierarch.length > 0 ? hierarch : null;
 					d.data.children = hierarch.length > 0 ? hierarch.map(d => d.data) : null;
-					return Promise.all([d, getPages(name)]);
+
+					const pagePromise = showPages ? getPages(name) : Promise.resolve([]);
+					return Promise.all([d, pagePromise]);
 				})
 				.then(([d, pages]) => {
 					const hierarch = pages.map(c => {
@@ -108,13 +116,19 @@ function tree() {
 
 				function blink() {
 					node.transition()
-							.ease(d3.easeLinear)
-							.duration(400)
-							.style('fill', 'ffa')
+							.ease(d3.easeCubic)
+							.duration(300)
+							.style('fill', '#F2BF00')
+							.style('stroke', '#D99100')
 						.transition()
-							.ease(d3.easeLinear)
-							.duration(400)
+							.ease(d3.easeCubic)
+							.duration(300)
 							.style('fill', '#888')
+							.style('stroke', '#888')
+						// .transition()
+						//	.ease(d3.easeCubic)
+						//	.duration(300)
+						//	.style('fill', '#ffa')
 						.on('end', blink);
 				}
 
@@ -122,9 +136,16 @@ function tree() {
 				updateRemote(d).finally(() => {
 					console.log(node);
 					node.transition()
-						.ease(d3.easeLinear)
-						.duration(200)
-						.style('fill', '#afc');
+							.ease(d3.easeCubic)
+							.duration(300)
+							.style('fill', '#C7FF0B')
+							.style('stroke', '#004B19')
+							.attr('r', circleGrowRadius)
+						.transition()
+							.delay(200)
+							.ease(d3.easeCubic)
+							.duration(200)
+							.attr('r', circleRadius);
 				});
 			}
 
@@ -220,7 +241,7 @@ function tree() {
 
 		        // update the node attributes and style
 		        nodeUpdate.select('circle.node')
-			        .attr('r', 9)
+			        .attr('r', circleRadius)
 					.attr('class', (d) => {
 						if (d.children) { return 'node--internal'; };
 						if (d.data.type === 'page') { return 'node--page'; };
@@ -250,12 +271,12 @@ function tree() {
 
 		        // update the links
 		        var link = svg.selectAll('path.link')
-			        .data(links, function(d) { return d.id });
+			        .data(links, d => d.id);
 
 		        // enter any new links at the parent's previous position
 		        var linkEnter = link.enter().insert('path', 'g')
 			        .attr('class', 'link')
-			        .attr('d', function(d) {
+			        .attr('d', (d) => {
 			        	var o = {x: source.x0 /* + margin.left */, y: source.y0 /* + margin.top */};
 			        	return diagonal({ source: o, target: o });
 			        });
@@ -332,7 +353,10 @@ function getSubcategoriesPromise(category) {
 window.addEventListener('load', () => {
     const categoryInput = document.getElementById('category');
     const defaultCategory = 'Roman emperors';
-    categoryInput.value = defaultCategory;
+	categoryInput.value = defaultCategory;
+
+	document.getElementById('page-toggle').checked = true;
+	document.getElementById('category-toggle').checked = true;
 
 	// cyGraph(defaultCategory);
 
@@ -343,13 +367,30 @@ window.addEventListener('load', () => {
 	d3.select('#d3').call(chart);
 });
 
+function refreshChart(category) {
+	const svg = d3.select("svg");
+	svg.selectAll('*').remove();
+	const children = null
+	const root = { name: category, children };
+	const chart = tree().data(root);
+	svg.call(chart);
+}
+
+function readCategory() {
+	const category = document.getElementById('category').value;
+	return category;
+}
+
 const addButton = document.getElementById('add-category');
 addButton.addEventListener('click', (event) => {
-  const category = document.getElementById('category').value;
-  const svg = d3.select("svg");
-  svg.selectAll('*').remove();
-  const children = null
-  const root = { name: category, children };
-  const chart = tree().data(root);
-  svg.call(chart);
+	const category = readCategory();
+	refreshChart(category);
+});
+
+const pageToggle = document.getElementById('page-toggle');
+pageToggle.addEventListener('click', (event) => {
+	const checked = pageToggle.checked;
+	const category = readCategory();
+	showPages = checked;
+	refreshChart(category)
 });

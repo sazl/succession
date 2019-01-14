@@ -27,8 +27,8 @@ h1 {
 
 .node circle {
     fill: #fff;
-    stroke: #888;
-    stroke-width: 2px;
+    stroke: #555;
+    stroke-width: 1px;
 }
 
 .node .node--leaf {
