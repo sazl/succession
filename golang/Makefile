@@ -1,7 +1,7 @@
 all: main
 
-wiki_api:
-	$(MAKE) -C proto
+run: main.go
+	gin run main.go
 
-main: main.go proto
+main: main.go
 	go build

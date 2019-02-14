@@ -8,29 +8,41 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
+	stdlog "log"
+
+	log "github.com/go-kit/kit/log"
 
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 
-	"gitlab.com/sazl/succession/wikiapi"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/openzipkin/zipkin-go-opentracing"
+	kitot "github.com/go-kit/kit/tracing/opentracing"
+
+	categorysvc "gitlab.com/sazl/succession/api/category/service"
+	inmem "gitlab.com/sazl/succession/api/category/persistence/inmem"
+	"gitlab.com/sazl/succession/wiki"
 )
 
 const (
-	defaultPort              = "8080"
-	defaultRoutingServiceURL = "http://localhost:7878"
+	defaultPort           = "8080"
+	defaultWikiServiceURL = "https://en.wikipedia.org/w/api.php"
+	defaultTracingServiceURL = ""
+	defaultTracingSamplingRate = 1.0
 )
 
 func main() {
 	var (
 		addr  = envString("PORT", defaultPort)
-		rsurl = envString("ROUTINGSERVICE_URL", defaultRoutingServiceURL)
+		wsURL = envString("WIKI_SERVICE_URL", defaultWikiServiceURL)
+		tracingURL = envString("TRACING_SERVICE_URL", defaultZipkinURL)
 
-		httpAddr          = flag.String("http.addr", ":"+addr, "HTTP listen address")
-		routingServiceURL = flag.String("service.routing", rsurl, "routing service URL")
+		serviceName = flag.String("name", "category_service", "Service Name")
+		httpAddr = flag.String("http.addr", ":" + addr, "HTTP listen address")
+		wikiServiceURL = flag.String("service.wiki", wsURL, "wiki service URL")
+		tracingServiceURL = flag.String("service.tracing", tracingURL, "Tracing Service URL")
+		tracingSamplingRate = flag.Float64("service.tracing.samplingrate", 1.0, "Tracing Sampling Rate")
 
 		ctx = context.Background()
 	)
@@ -38,103 +50,56 @@ func main() {
 	flag.Parse()
 
 	var logger log.Logger
-	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	{
+		logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+		stdlog.SetFlags(0)                             // flags are handled by Go kit's logger
+		stdlog.SetOutput(log.NewStdlibAdapter(logger)) // redirect anything using stdlib log to us
+
+		httpLogger = log.With(logger, "component", "http")
+		transportLogger = log.With(logger, "component", *serviceName)
+		traceLogger = log.With(transportLogger, "echo", "tracing")
+	}
 
 	var (
-		cargos         = inmem.NewCargoRepository()
-		locations      = inmem.NewLocationRepository()
-		voyages        = inmem.NewVoyageRepository()
-		handlingEvents = inmem.NewHandlingEventRepository()
+		categories = inmem.NewCategoryRepository()
+		fieldKeys = []string{"method"}
 	)
 
-	// Configure some questionable dependencies.
-	var (
-		handlingEventFactory = cargo.HandlingEventFactory{
-			CargoRepository:    cargos,
-			VoyageRepository:   voyages,
-			LocationRepository: locations,
-		}
-		handlingEventHandler = handling.NewEventHandler(
-			inspection.NewService(cargos, handlingEvents, nil),
-		)
-	)
+	var ws wiki.Service
+	ws = wiki.NewProxyingMiddleware(ctx, *wikiServiceURL)(ws)
 
-	// Facilitate testing by adding some cargos.
-	storeTestData(cargos)
+	var cs categorysvc.Service
+	cs = categorysvc.NewService(categories, ws)
 
-	fieldKeys := []string{"method"}
+	cs = categorysvc.NewTracingService(*tracingServiceURL, *tracingSamplingRate, *serviceName, cs)
 
-	var rs routing.Service
-	rs = routing.NewProxyingMiddleware(ctx, *routingServiceURL)(rs)
+	cs = categorysvc.NewLoggingService(transportLogger, cs)
+	cs = categorysvc.NewLoggingService(traceLogger, cs)
 
-	var bs booking.Service
-	bs = booking.NewService(cargos, locations, handlingEvents, rs)
-	bs = booking.NewLoggingService(log.With(logger, "component", "booking"), bs)
-	bs = booking.NewInstrumentingService(
+	cs = categorysvc.NewInstrumentingService(
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
 			Namespace: "api",
-			Subsystem: "booking_service",
+			Subsystem: *serviceName,
 			Name:      "request_count",
 			Help:      "Number of requests received.",
 		}, fieldKeys),
 		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
 			Namespace: "api",
-			Subsystem: "booking_service",
+			Subsystem: *serviceName,
 			Name:      "request_latency_microseconds",
 			Help:      "Total duration of requests in microseconds.",
 		}, fieldKeys),
-		bs,
+		cs,
 	)
-
-	var ts tracking.Service
-	ts = tracking.NewService(cargos, handlingEvents)
-	ts = tracking.NewLoggingService(log.With(logger, "component", "tracking"), ts)
-	ts = tracking.NewInstrumentingService(
-		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-			Namespace: "api",
-			Subsystem: "tracking_service",
-			Name:      "request_count",
-			Help:      "Number of requests received.",
-		}, fieldKeys),
-		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-			Namespace: "api",
-			Subsystem: "tracking_service",
-			Name:      "request_latency_microseconds",
-			Help:      "Total duration of requests in microseconds.",
-		}, fieldKeys),
-		ts,
-	)
-
-	var hs handling.Service
-	hs = handling.NewService(handlingEvents, handlingEventFactory, handlingEventHandler)
-	hs = handling.NewLoggingService(log.With(logger, "component", "handling"), hs)
-	hs = handling.NewInstrumentingService(
-		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-			Namespace: "api",
-			Subsystem: "handling_service",
-			Name:      "request_count",
-			Help:      "Number of requests received.",
-		}, fieldKeys),
-		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-			Namespace: "api",
-			Subsystem: "handling_service",
-			Name:      "request_latency_microseconds",
-			Help:      "Total duration of requests in microseconds.",
-		}, fieldKeys),
-		hs,
-	)
-
-	httpLogger := log.With(logger, "component", "http")
 
 	mux := http.NewServeMux()
+	fs := http.FileServer(http.Dir("static"))
 
-	mux.Handle("/booking/v1/", booking.MakeHandler(bs, httpLogger))
-	mux.Handle("/tracking/v1/", tracking.MakeHandler(ts, httpLogger))
-	mux.Handle("/handling/v1/", handling.MakeHandler(hs, httpLogger))
-
+	mux.Handle("/category/v1/", categorysvc.MakeHandler(cs, httpLogger))
 	http.Handle("/", accessControl(mux))
 	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	errs := make(chan error, 2)
 	go func() {
@@ -170,24 +135,4 @@ func envString(env, fallback string) string {
 		return fallback
 	}
 	return e
-}
-
-func storeTestData(r cargo.Repository) {
-	test1 := cargo.New("FTL456", cargo.RouteSpecification{
-		Origin:          location.AUMEL,
-		Destination:     location.SESTO,
-		ArrivalDeadline: time.Now().AddDate(0, 0, 7),
-	})
-	if err := r.Store(test1); err != nil {
-		panic(err)
-	}
-
-	test2 := cargo.New("ABC123", cargo.RouteSpecification{
-		Origin:          location.SESTO,
-		Destination:     location.CNHKG,
-		ArrivalDeadline: time.Now().AddDate(0, 0, 14),
-	})
-	if err := r.Store(test2); err != nil {
-		panic(err)
-	}
 }

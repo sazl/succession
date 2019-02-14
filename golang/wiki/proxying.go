@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/go-kit/kit/circuitbreaker"
 	"github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
 
-	"gitlab.com/sazl/succession/api/model/category"
+	category "gitlab.com/sazl/succession/api/category/model"
 )
 
 type proxyService struct {
@@ -23,17 +24,42 @@ func (s proxyService) FetchCategoryByName(name category.Name) category.Category 
 	response, err := s.FetchCategoryByNameEndpoint(s.Context, fetchCategoryByNameRequest{
 		Name: string(name),
 	})
+
 	if err != nil {
 		return category.Category{}
 	}
 
-	resp := response.(fetchCategoryByNameResponse)
-
-	return &category.Category{
-		ID: 1,
-		Name: "string",
-		Title: "hello",
+	resp, ok := response.(fetchCategoryByNameResponse)
+	if !ok {
+		return category.Category{}
 	}
+
+	var categoryMembers []category.Category
+	for _, cm := range resp.Query.CategoryMembers {
+		c := category.Category{
+			ID: category.ID(strconv.Itoa(cm.PageID)),
+			Namespace: cm.Namespace,
+			Title: category.Title(cm.Title),
+			Name: category.Name(cm.Title),
+		}
+		categoryMembers = append(categoryMembers, c)
+	}
+
+	if len(categoryMembers) == 0 {
+		return category.Category{}
+	}
+	firstCategory := categoryMembers[0]
+
+	result := category.Category{
+		ID: firstCategory.ID,
+		Namespace: firstCategory.Namespace,
+		Title: firstCategory.Title,
+		Name: firstCategory.Name,
+		CategoryMembers: categoryMembers,
+	}
+
+
+	return result
 }
 
 // ServiceMiddleware defines a middleware for a routing service.
@@ -65,7 +91,7 @@ type categoryMembersResponse struct {
 
 type fetchCategoryByNameResponse struct {
 	BatchComplete string `json:"batchcomplete"`
-	Query categoryMembersResponse `json:"categorymembers"`
+	Query categoryMembersResponse `json:"query"`
 }
 
 func makeFetchCategoryByNameEndpoint(ctx context.Context, instance string) endpoint.Endpoint {
