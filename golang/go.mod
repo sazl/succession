@@ -14,15 +14,17 @@ require (
 	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/mattn/go-shellwords v1.0.3 // indirect
+	github.com/oklog/run v1.0.0
 	github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492 // indirect
 	github.com/opentracing/opentracing-go v1.0.2
-	github.com/openzipkin-contrib/zipkin-go-opentracing v0.3.5 // indirect
-	github.com/openzipkin/zipkin-go v0.1.5 // indirect
+	github.com/openzipkin-contrib/zipkin-go-opentracing v0.3.5
+	github.com/openzipkin/zipkin-go v0.1.5
 	github.com/openzipkin/zipkin-go-opentracing v0.3.5
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/prometheus/client_golang v0.9.2
-	github.com/sony/gobreaker v0.0.0-20181109014844-d928aaea92e1 // indirect
+	github.com/sony/gobreaker v0.0.0-20181109014844-d928aaea92e1
 	github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a // indirect
+	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 	google.golang.org/grpc v1.18.0 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )

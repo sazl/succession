@@ -1,7 +1,6 @@
-all: main
 
-run: main.go
-	gin run main.go
+run: cmd/succession/main.go
+	gin run $^
 
-main: main.go
-	go build
+build: cmd/succession/main.go
+	go build $^

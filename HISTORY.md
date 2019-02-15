@@ -1,0 +1,4 @@
+- initial prototype in CSS/HTML/JS
+- flask server
+- go prototype
+- go-kit microservice
