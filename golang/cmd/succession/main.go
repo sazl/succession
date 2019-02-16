@@ -168,7 +168,7 @@ func main() {
 	)
 
 	var ws wiki.Service
-	ws = wiki.NewProxyingMiddleware(ctx, *wikiServiceURL)(ws)
+	ws = wiki.NewProxyingMiddleware(ctx, *wikiServiceURL, otTracer, zipkinTracer)(ws)
 
 	var cs categorysvc.Service
 	cs = categorysvc.NewService(categories, ws)

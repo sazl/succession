@@ -6,9 +6,18 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
+
+	"golang.org/x/time/rate"
+
+	"github.com/go-kit/kit/tracing/opentracing"
+	"github.com/go-kit/kit/tracing/zipkin"
+	stdopentracing "github.com/opentracing/opentracing-go"
+	stdzipkin "github.com/openzipkin/zipkin-go"
 
 	"github.com/go-kit/kit/circuitbreaker"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/go-kit/kit/ratelimit"
 	kithttp "github.com/go-kit/kit/transport/http"
 
 	category "gitlab.com/sazl/succession/pkg/succession/category/model"
@@ -37,10 +46,10 @@ func (s proxyService) FetchCategoryByName(name category.Name) category.Category 
 	var categoryMembers []category.Category
 	for _, cm := range resp.Query.CategoryMembers {
 		c := category.Category{
-			ID: category.ID(strconv.Itoa(cm.PageID)),
+			ID:        category.ID(strconv.Itoa(cm.PageID)),
 			Namespace: cm.Namespace,
-			Title: category.Title(cm.Title),
-			Name: category.Name(cm.Title),
+			Title:     category.Title(cm.Title),
+			Name:      category.Name(cm.Title),
 		}
 		categoryMembers = append(categoryMembers, c)
 	}
@@ -51,13 +60,12 @@ func (s proxyService) FetchCategoryByName(name category.Name) category.Category 
 	firstCategory := categoryMembers[0]
 
 	result := category.Category{
-		ID: firstCategory.ID,
-		Namespace: firstCategory.Namespace,
-		Title: firstCategory.Title,
-		Name: firstCategory.Name,
+		ID:              firstCategory.ID,
+		Namespace:       firstCategory.Namespace,
+		Title:           firstCategory.Title,
+		Name:            firstCategory.Name,
 		CategoryMembers: categoryMembers,
 	}
-
 
 	return result
 }
@@ -66,10 +74,13 @@ func (s proxyService) FetchCategoryByName(name category.Name) category.Category 
 type ServiceMiddleware func(Service) Service
 
 // NewProxyingMiddleware returns a new instance of a proxying middleware.
-func NewProxyingMiddleware(ctx context.Context, proxyURL string) ServiceMiddleware {
+func NewProxyingMiddleware(ctx context.Context, proxyURL string, otTracer stdopentracing.Tracer, zipkinTracer *stdzipkin.Tracer) ServiceMiddleware {
 	return func(next Service) Service {
 		var e endpoint.Endpoint
-		e = makeFetchCategoryByNameEndpoint(ctx, proxyURL)
+		e = makeFetchCategoryByNameEndpoint(ctx, proxyURL, otTracer, zipkinTracer)
+		e = opentracing.TraceClient(otTracer, "Sum")(e)
+		e = zipkin.TraceEndpoint(zipkinTracer, "Sum")(e)
+		e = ratelimit.NewErroringLimiter(rate.NewLimiter(rate.Every(time.Second), 100))(e)
 		e = circuitbreaker.Hystrix("fetch-category-by-name")(e)
 		return proxyService{ctx, e, next}
 	}
@@ -90,11 +101,11 @@ type categoryMembersResponse struct {
 }
 
 type fetchCategoryByNameResponse struct {
-	BatchComplete string `json:"batchcomplete"`
-	Query categoryMembersResponse `json:"query"`
+	BatchComplete string                  `json:"batchcomplete"`
+	Query         categoryMembersResponse `json:"query"`
 }
 
-func makeFetchCategoryByNameEndpoint(ctx context.Context, instance string) endpoint.Endpoint {
+func makeFetchCategoryByNameEndpoint(ctx context.Context, instance string, otTracer stdopentracing.Tracer, zipkinTracer *stdzipkin.Tracer) endpoint.Endpoint {
 	u, err := url.Parse(instance)
 	if err != nil {
 		panic(err)
@@ -102,10 +113,19 @@ func makeFetchCategoryByNameEndpoint(ctx context.Context, instance string) endpo
 	if u.Path == "" {
 		u.Path = "/paths"
 	}
+
+	zipkinClient := zipkin.HTTPClientTrace(zipkinTracer)
+
+	options := []kithttp.ClientOption{
+		zipkinClient,
+	}
+
 	return kithttp.NewClient(
-		"GET", u,
+		"GET",
+		u,
 		encodeFetchCategoryByNameRequest,
 		decodeFetchCategoryByNameResponse,
+		options...,
 	).Endpoint()
 }
 
@@ -123,7 +143,7 @@ func encodeFetchCategoryByNameRequest(_ context.Context, r *http.Request, reques
 	vals := r.URL.Query()
 	vals.Add("action", "query")
 	vals.Add("list", "categorymembers")
-	vals.Add("cmtitle", "Category:" + req.Name)
+	vals.Add("cmtitle", "Category:"+req.Name)
 	vals.Add("format", "json")
 	vals.Add("cmlimit", "100")
 	r.URL.RawQuery = vals.Encode()

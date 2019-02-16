@@ -2,3 +2,6 @@
 - flask server
 - go prototype
 - go-kit microservice
+- kubernetes zipkin
+- can't get zipkin pvc to deploy on kubernetes
+- trying docker-compose
