@@ -4,5 +4,5 @@ WORKDIR /app
 RUN make build
 
 FROM alpine:3.9
-COPY --from=builder /app/main /app/main
-CMD /app/main
+COPY --from=builder /app/succession /app/succession
+CMD /app/succession

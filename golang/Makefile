@@ -1,6 +1,6 @@
 
-run: cmd/succession/main.go
+run: cmd/succession/succession.go
 	gin run $^
 
-build: cmd/succession/main.go
+build: cmd/succession/succession.go
 	go build $^
