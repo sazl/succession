@@ -1,5 +1,7 @@
 # Succession
 
+**WORK IN PROGRESS**
+
 ## Summary
 
 **Succession:** a tool to trace the succession of leaders in a graph form,
