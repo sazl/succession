@@ -5,6 +5,8 @@
 *.so
 *.dylib
 main
+golang/succesion
+gin-bin
 
 # Test binary, built with `go test -c`
 *.test
