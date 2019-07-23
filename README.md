@@ -2,24 +2,21 @@
 
 **WORK IN PROGRESS**
 
-## Summary
+## The Plan
 
-**Succession:** a tool to trace the succession of leaders in a graph form,
+**Succession:** a tool to trace the succession of leaders in graph form,
 read the history/biography as you click and work down the years.
 Nice for studying political history.
 
 ## Features
 
-- Trace all political lineages
+- Trace all political lineages (!)
 - Include significant contenders, usurpers, and challengers.
 - Tag particular nodes (leaders) with attributes that can be searched and filtered
-- Support complex range filters and selection filters e.g. All emperors assassinated within 5 years of their rule.
-
-## Example Output
-
-<img src="docs/images/example.png" alt="Example Output" />
-
-## Queries
+- Support complex range filters and selection filters, such as:
+  + Dynasties with more than 3 generations
+  + All emperors assassinated within 5 years of their rule
+  + Dynasties with interrupted succession
 
 ## Wiki Notes
 
@@ -86,6 +83,9 @@ https://en.wikipedia.org/wiki/Template:Infobox_royalty
 - https://en.wikipedia.org/wiki/Template:Infobox_pharaoh
 - https://en.wikipedia.org/wiki/Template:Infobox_pretender
 
+## Example Output
+
+<img src="docs/images/example.png" alt="Example Output" />
 
 ## Architecture
 
