@@ -17,12 +17,62 @@ Nice for studying political history.
 
 ## Example Output
 
-![Example Output](./docs/images/example.png "Example Output")
+<img src="docs/images/example.png" alt="Example Output" />
 
 ## Queries
 
-
 ## Wiki Notes
+
+### Micro formats
+
+#### Info
+
+"The HTML markup produced by this template includes an hCard microformat, which makes the person's details parsable by computers"
+
+- hCard 1.0 Spec: http://microformats.org/wiki/hcard
+- Property List: http://microformats.org/wiki/hcard#Property_List
+- https://en.wikipedia.org/wiki/HCard
+- https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Microformats
+- https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Microformats/hcard
+- Address only subset of hCard: https://en.wikipedia.org/wiki/Adr_(microformat)
+
+### Format
+
+```HTML
+<div class="vcard">
+    <span class="fname"></span>
+    <span class="role"></span>
+    <span class="bday"></span>
+    ...
+</div>
+```
+
+Successor and predecssor info is not part of the spec, it must be parsed from wikipedia's infobox.
+
+Example from Trajan's hCard/infobox HTML:
+
+```HTML
+<table>
+  <tbody>
+    ...
+
+    <tr>
+      <th scope="row">Predecessor</th>
+      <td><a href="/wiki/Nerva" title="Nerva">Nerva</a></td>
+    </tr>
+    <tr>
+      <th scope="row">Successor</th>
+      <td><a href="/wiki/Hadrian" title="Hadrian">Hadrian</a></td>
+    </tr>
+
+    ...
+  </tbody>
+</table>
+```
+
+#### Examples
+
+[Trajan hCard Example](./docs/examples/trajan-hcard.html)
 
 ### Infobox
 
@@ -30,28 +80,12 @@ https://en.wikipedia.org/wiki/Template:Infobox_royalty
 
 ### Other Infoboxes
 
-https://en.wikipedia.org/wiki/Template:Infobox_peerage_title
-https://en.wikipedia.org/wiki/Template:Infobox_baronetage
-https://en.wikipedia.org/wiki/Template:Infobox_Egyptian_dignitary
-https://en.wikipedia.org/wiki/Template:Infobox_noble
-https://en.wikipedia.org/wiki/Template:Infobox_peer
-https://en.wikipedia.org/wiki/Template:Infobox_pharaoh
-https://en.wikipedia.org/wiki/Template:Infobox_pretender
+- https://en.wikipedia.org/wiki/Template:Infobox_Egyptian_dignitary
+- https://en.wikipedia.org/wiki/Template:Infobox_noble
+- https://en.wikipedia.org/wiki/Template:Infobox_peer
+- https://en.wikipedia.org/wiki/Template:Infobox_pharaoh
+- https://en.wikipedia.org/wiki/Template:Infobox_pretender
 
-### Micro formats
-
-"The HTML markup produced by this template includes an hCard microformat, which makes the person's details parsable by computers"
-
-https://en.wikipedia.org/wiki/HCard
-
-https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Microformats
-
-Unfortunately the hCards are not complete.
-Take Trajan for example:
-
-```
-
-```
 
 ## Architecture
 
