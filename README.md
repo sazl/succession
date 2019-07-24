@@ -73,7 +73,41 @@ Example from Trajan's hCard/infobox HTML:
 
 ### Infobox
 
+Parsing Wikipedia's infobox is another option.
+Wiki markup has a template for infoboxes that specifies a 'successor' and 'predecessor' key.
+
 https://en.wikipedia.org/wiki/Template:Infobox_royalty
+
+
+#### Example
+
+Amanirenas Info Box
+
+```
+{{Infobox monarch
+| name               = Amanirenas
+| title              = [[List of monarchs of Kush|Queen]] of [[Kingdom of Kush|Kush]]
+| image              = File:Stele hamadab.JPG
+| caption            = Meroitic Stela found at Hamadab
+| reign              = c. 40–10 BC
+| coronation         =
+| full name          = Ameniras, Qore and Kandake
+| predecessor        = [[Teriteqas]]
+| successor          = [[Amanishakheto]]
+| spouse             =
+| issue              = [[Akinidad]]
+| royal house        =
+| dynasty            = [[Meroitic period]]
+| father             =
+| mother             =
+| birth_date         = 60s–50s BC
+| birth_place        =
+| death_date         = c. 10 BC
+| death_place        =
+| date of burial     =
+| place of burial    = [[Jebel Barkal]] (Bar. 4?)
+}}
+```
 
 ### Other Infoboxes
 
