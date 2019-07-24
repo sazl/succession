@@ -77,6 +77,7 @@ Parsing Wikipedia's infobox is another option.
 Wiki markup has a template for infoboxes that specifies a 'successor' and 'predecessor' key.
 
 https://en.wikipedia.org/wiki/Template:Infobox_royalty
+https://en.wikipedia.org/wiki/Template:Infobox_officeholder
 
 
 #### Example
