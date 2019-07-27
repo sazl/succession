@@ -18,6 +18,12 @@ Nice for studying political history.
   + All emperors assassinated within 5 years of their rule
   + Dynasties with interrupted succession
 
+## Architecture
+
+<p align="center">
+  <img width="730" height="488" src="./docs/images/arch.png" alt="Architecture">
+</p>
+
 ## Wiki Notes
 
 ### Micro formats
@@ -121,7 +127,3 @@ Amanirenas Info Box
 ## Example Output
 
 <img src="docs/images/example.png" alt="Example Output" />
-
-## Architecture
-
-![Architecture](./docs/images/arch.png "Architecture")
